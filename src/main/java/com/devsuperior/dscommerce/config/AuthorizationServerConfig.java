@@ -8,6 +8,7 @@ import java.time.Duration;
 import java.util.List;
 import java.util.UUID;
 
+import org.springframework.security.oauth2.core.ClientAuthenticationMethod;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
@@ -18,7 +19,6 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.OAuth2AuthorizationServerConfiguration;
 import org.springframework.security.config.annotation.web.configurers.oauth2.server.authorization.OAuth2AuthorizationServerConfigurer;
 import org.springframework.security.core.userdetails.UserDetailsService;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.oauth2.core.AuthorizationGrantType;
 import org.springframework.security.oauth2.core.OAuth2Token;
@@ -67,6 +67,9 @@ public class AuthorizationServerConfig {
 	@Autowired
 	private UserDetailsService userDetailsService;
 
+	@Autowired
+	private PasswordEncoder passwordEncoder;
+
 	@Bean
 	@Order(2)
 	SecurityFilterChain asSecurityFilterChain(HttpSecurity http) throws Exception {
@@ -81,7 +84,7 @@ public class AuthorizationServerConfig {
 					authorizationService(),
 					tokenGenerator(),
 					userDetailsService,
-					passwordEncoder())));
+					passwordEncoder)));
 
 		http.oauth2ResourceServer(oauth2ResourceServer ->
 			oauth2ResourceServer.jwt(Customizer.withDefaults()));
@@ -100,25 +103,21 @@ public class AuthorizationServerConfig {
 	}
 
 	@Bean
-	PasswordEncoder passwordEncoder() {
-		return new BCryptPasswordEncoder();
-	}
+RegisteredClientRepository registeredClientRepository() {
 
-	@Bean
-	RegisteredClientRepository registeredClientRepository() {
+	RegisteredClient registeredClient = RegisteredClient
+		.withId(UUID.randomUUID().toString())
+		.clientId(clientId)
+		.clientSecret(passwordEncoder.encode(clientSecret))
+		.clientAuthenticationMethod(ClientAuthenticationMethod.CLIENT_SECRET_BASIC)
+		.scope("read")
+		.scope("write")
+		.authorizationGrantType(new AuthorizationGrantType("password"))
+		.tokenSettings(tokenSettings())
+		.clientSettings(clientSettings())
+		.build();
 
-		RegisteredClient registeredClient = RegisteredClient
-			.withId(UUID.randomUUID().toString())
-			.clientId(clientId)
-			.clientSecret(passwordEncoder().encode(clientSecret))
-			.scope("read")
-			.scope("write")
-			.authorizationGrantType(new AuthorizationGrantType("password"))
-			.tokenSettings(tokenSettings())
-			.clientSettings(clientSettings())
-			.build();
-
-		return new InMemoryRegisteredClientRepository(registeredClient);
+	return new InMemoryRegisteredClientRepository(registeredClient);
 	}
 
 	@Bean
