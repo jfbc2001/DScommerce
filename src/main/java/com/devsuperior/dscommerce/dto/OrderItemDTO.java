@@ -49,6 +49,14 @@ public class OrderItemDTO {
         return imgUrl;
     }
 
+    public void setProductId(Long productId) {
+        this.productId = productId;
+    }
+
+    public void setQuantity(Integer quantity) {
+        this.quantity = quantity;
+    }
+
     public Double getSubTotal() {
         return price * quantity;
     }
