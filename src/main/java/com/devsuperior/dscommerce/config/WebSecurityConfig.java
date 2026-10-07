@@ -24,7 +24,7 @@ public class WebSecurityConfig {
         http
             .securityMatcher("/**")
             .authorizeHttpRequests(authorize -> authorize
-                .requestMatchers(HttpMethod.GET, "/products/**").permitAll()
+                .requestMatchers(HttpMethod.GET, "/products/**", "/categories/**").permitAll()
                 .anyRequest().authenticated()
             )
             .csrf(csrf -> csrf.disable())
